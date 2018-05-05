@@ -75,7 +75,8 @@ class DecisionTree():
         info_feature_more *= info_sum
 
         info_feature = info_feature_less + info_feature_more
-        return info_feature
+        gain = info_d - info_feature
+        return gain
 
 class Node():
     left = None
