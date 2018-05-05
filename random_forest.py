@@ -49,32 +49,21 @@ class DecisionTree():
 
         #divide continuous features by their mean
         mean = np.mean(feature)
-        total_less = sum([1 for instance in feature if instance <= mean])
-        total_more = sum([1 for instance in feature if instance > mean])
-
+        partitions = [lambda a,b: a <= b, lambda a,b: a > b]
         feature_with_klass = np.dstack((feature, klasses))[0]
+        info_feature = 0
+        for partition_func in partitions:
+            total_partition = sum([1 for instance in feature if partition_func(instance, mean)])
+            info_feature_partition = (total_partition/total)
+            info_sum = 0
+            for klass in klasses_set:
+                total_in_klass = sum([1 for instance in feature_with_klass if instance[1] == klass and partition_func(instance[0], mean)])
+                if total_in_klass != 0 and total_partition != 0:
+                    info_sum -= (total_in_klass/total_partition)*math.log(total_in_klass/total_partition, 2)
 
-        #gain for features less than mean
-        info_feature_less = (total_less/total)
-        info_sum = 0
-        for klass in klasses_set:
-            total_in_klass = sum([1 for instance in feature_with_klass if instance[1] == klass and instance[0] <= mean])
-            if total_in_klass != 0 and total_less != 0:
-                info_sum -= (total_in_klass/total_less)*math.log(total_in_klass/total_less, 2)
+            info_feature_partition *= info_sum
+            info_feature += info_feature_partition
 
-        info_feature_less *= info_sum
-
-        #gain for features more than mean
-        info_feature_more = (total_more/total)
-        info_sum = 0
-        for klass in klasses_set:
-            total_in_klass = sum([1 for instance in feature_with_klass if instance[1] == klass and instance[0] > mean])
-            if total_in_klass != 0 and total_more != 0:
-                info_sum -= (total_in_klass/total_more)*math.log(total_in_klass/total_more, 2)
-
-        info_feature_more *= info_sum
-
-        info_feature = info_feature_less + info_feature_more
         gain = info_d - info_feature
         return gain
 
