@@ -60,6 +60,7 @@ class DecisionTree():
         split_klasses = []
         first_feature = True
         #get rows that match the best feature split
+        subset = random.sample(list(best_feature.values), int(len(set(best_feature.values))/2))
         for feature in features:
             values = []
             for i, value in enumerate(feature.values):
@@ -68,11 +69,9 @@ class DecisionTree():
                 elif is_float(best_feature.values[i]) and direction == 'right':
                     split_func = lambda a: a > np.mean(best_feature.values)
                 elif not is_float(best_feature.values[i]) and direction == 'left':
-                    subset = random.sample(list(feature.values), 2)
                     split_func = lambda a: a in subset
                 elif not is_float(best_feature.values[i]) and direction == 'right':
-                    subset = random.sample(list(feature.values), 2)
-                    split_func = lambda a,b: a not in subset
+                    split_func = lambda a: a not in subset
 
                 if split_func(best_feature.values[i]):
                     values.append(value)
@@ -97,6 +96,16 @@ class DecisionTree():
             return node
         else:
             considered_features = [feature for feature in features if feature.name in feature_names]
+            # for c in considered_features:
+            #     print(c.name)
+            #     print(c.values)
+            # print()
+
+            # for c in considered_features:
+            #     print(c.values)
+            #     print(klasses)
+            #     print(len( c.values ), len( klasses ))
+            #     print()
             best_feature = self.get_best_feature(considered_features, klasses)
             node.feature = best_feature.name
             #remove best feature from list
@@ -137,9 +146,10 @@ class DecisionTree():
 
     def categorical_gain(self, feature, klasses, info_d, total, klasses_set):
         partitions = [lambda a,b: a in b, lambda a,b: a not in b]
+        # print(len( feature ), len( klasses ))
         feature_with_klass = np.dstack((feature, klasses))[0]
         info_feature = 0
-        subset = random.sample(list(feature), 2)
+        subset = random.sample(list(feature), int(len(set(feature))/2))
         for partition_func in partitions:
             total_partition = sum([1 for instance in feature if partition_func(instance, subset)])
             info_feature_partition = (total_partition/total)
@@ -183,6 +193,7 @@ class DecisionTree():
 
         while not node.is_leaf:
             value = instance[self.feature_names.index(node.feature)]
+            print(value)
             if node.left_function(value):
                 node = node.left
             elif node.right_function(value):
