@@ -15,8 +15,8 @@ import random
 import numpy as np
 from collections import Counter
 
-
-INPUT_FILE = 'datasets/pima.tsv'
+# INPUT_FILE = 'datasets/pima.tsv'
+INPUT_FILE = 'datasets/dadosBenchmark_validacaoAlgoritmoAD.csv'
 
 class DecisionTree():
     root = None
@@ -40,9 +40,9 @@ class DecisionTree():
 
         return self.root
 
-
     def most_common(self, klasses):
-        return max(set(klasses), key=klasses.count)
+        b = Counter(klasses)
+        return b.most_common(1)[0][0]
 
     def get_best_feature(self, features, klasses):
         max_gain = 0
@@ -55,7 +55,7 @@ class DecisionTree():
 
         return best_feature
 
-    def split_features(self, features, best_feature, klasses, split_func):
+    def split_features(self, features, best_feature, klasses, direction):
         split_features = []
         split_klasses = []
         first_feature = True
@@ -63,7 +63,18 @@ class DecisionTree():
         for feature in features:
             values = []
             for i, value in enumerate(feature.values):
-                if split_func(best_feature.values[i], np.mean(best_feature.values)):
+                if is_float(best_feature.values[i]) and direction == 'left':
+                    split_func = lambda a: a <= np.mean(best_feature.values)
+                elif is_float(best_feature.values[i]) and direction == 'right':
+                    split_func = lambda a: a > np.mean(best_feature.values)
+                elif not is_float(best_feature.values[i]) and direction == 'left':
+                    subset = random.sample(list(feature.values), 2)
+                    split_func = lambda a: a in subset
+                elif not is_float(best_feature.values[i]) and direction == 'right':
+                    subset = random.sample(list(feature.values), 2)
+                    split_func = lambda a,b: a not in subset
+
+                if split_func(best_feature.values[i]):
                     values.append(value)
                     if first_feature:
                         split_klasses.append(klasses[i])
@@ -72,7 +83,7 @@ class DecisionTree():
             split_feature = Feature(feature.name, values)
             split_features.append(split_feature)
 
-        return split_features, split_klasses
+        return split_features, split_klasses, split_func
 
     def build_recursive(self, features, klasses, feature_names):
         node = Node()
@@ -91,28 +102,26 @@ class DecisionTree():
             #remove best feature from list
             feature_names = [feature for feature in feature_names if feature != best_feature.name]
 
-            left_features, left_klasses = self.split_features(features, best_feature, klasses, lambda a,b: a <=b)
+            left_features, left_klasses, left_function = self.split_features(features, best_feature, klasses, 'left')
             if len(left_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
                 return node
 
-            node.left_function = lambda a: a <=np.mean(best_feature.values)
+            node.left_function = left_function
             node.left = self.build_recursive(left_features, left_klasses, feature_names)
 
-            right_features, right_klasses = self.split_features(features, best_feature, klasses, lambda a,b: a >= b)
+            right_features, right_klasses, right_function = self.split_features(features, best_feature, klasses, 'right')
             if len(right_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
                 return node
 
-            node.right_function = lambda a: a > np.mean(best_feature.values)
+            node.right_function = right_function
             node.right = self.build_recursive(right_features, right_klasses, feature_names)
 
             return node
 
-
-    #@TODO categorical features
     def entropy_gain(self, feature, klasses):
         klasses_set = set(klasses)
         info_d = 0
@@ -121,9 +130,36 @@ class DecisionTree():
             total_in_klass = sum([1 for instance in self.instances if instance[-1] == klass])
             info_d -= (total_in_klass/total) * math.log((total_in_klass/total), 2)
 
-        #divide continuous features by their mean
-        mean = np.mean(feature)
+        if is_float(feature[0]):
+            return self.continuous_gain(feature, klasses, info_d, total, klasses_set)
+        else:
+            return self.categorical_gain(feature, klasses, info_d, total, klasses_set)
+
+    def categorical_gain(self, feature, klasses, info_d, total, klasses_set):
+        partitions = [lambda a,b: a in b, lambda a,b: a not in b]
+        feature_with_klass = np.dstack((feature, klasses))[0]
+        info_feature = 0
+        subset = random.sample(list(feature), 2)
+        for partition_func in partitions:
+            total_partition = sum([1 for instance in feature if partition_func(instance, subset)])
+            info_feature_partition = (total_partition/total)
+            info_sum = 0
+            for klass in klasses_set:
+                total_in_klass = sum([1 for instance in feature_with_klass if instance[1] == klass
+                                      and partition_func(instance[0], subset)])
+                if total_in_klass != 0 and total_partition != 0:
+                    info_sum -= (total_in_klass/total_partition)*math.log(total_in_klass/total_partition, 2)
+
+            info_feature_partition *= info_sum
+            info_feature += info_feature_partition
+
+        gain = info_d - info_feature
+        return gain
+
+    #divide continuous features by their mean
+    def continuous_gain(self, feature, klasses, info_d, total, klasses_set):
         partitions = [lambda a,b: a <= b, lambda a,b: a > b]
+        mean = np.mean(feature)
         feature_with_klass = np.dstack((feature, klasses))[0]
         info_feature = 0
         for partition_func in partitions:
@@ -177,7 +213,7 @@ class Node():
         self.right = right
 
 def main():
-    feature_names, data = load_csv(INPUT_FILE, '\t')
+    feature_names, data = load_csv(INPUT_FILE, ';')
     data = np.array(data)
     tree  = DecisionTree(data, feature_names)
     tree.build()
@@ -192,7 +228,15 @@ def main():
 
     print(right/(right+wrong))
 
+def is_float(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 def load_csv(filename, separator= ','):
+
     data = []
 
     with open(filename) as file:
@@ -203,11 +247,11 @@ def load_csv(filename, separator= ','):
 
             fields = line.split(separator)
             # read all attributes as floats, except for the class
-            instance = [float(val) for val in fields[0:-1]] + [int(fields[-1])]
+            instance = [float(val) if is_float(val) else val for val in fields[0:-1]] + \
+                       [int(fields[-1]) if is_float(fields[-1]) else fields[-1]]
             data.append(instance)
 
     return feature_names, data
-
 
 if __name__ == '__main__':
     main()
