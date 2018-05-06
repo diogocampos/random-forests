@@ -55,12 +55,11 @@ class DecisionTree():
 
         return best_feature
 
-    def split_features(self, features, best_feature, klasses, direction):
+    def split_features(self, features, best_feature, klasses, direction, subset):
         split_features = []
         split_klasses = []
         first_feature = True
         #get rows that match the best feature split
-        subset = random.sample(list(best_feature.values), int(len(set(best_feature.values))/2))
         for feature in features:
             values = []
             for i, value in enumerate(feature.values):
@@ -96,22 +95,13 @@ class DecisionTree():
             return node
         else:
             considered_features = [feature for feature in features if feature.name in feature_names]
-            # for c in considered_features:
-            #     print(c.name)
-            #     print(c.values)
-            # print()
-
-            # for c in considered_features:
-            #     print(c.values)
-            #     print(klasses)
-            #     print(len( c.values ), len( klasses ))
-            #     print()
             best_feature = self.get_best_feature(considered_features, klasses)
             node.feature = best_feature.name
             #remove best feature from list
             feature_names = [feature for feature in feature_names if feature != best_feature.name]
 
-            left_features, left_klasses, left_function = self.split_features(features, best_feature, klasses, 'left')
+            subset = random.sample(list(best_feature.values), int(len(set(best_feature.values))/2))
+            left_features, left_klasses, left_function = self.split_features(features, best_feature, klasses, 'left', subset)
             if len(left_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
@@ -120,7 +110,7 @@ class DecisionTree():
             node.left_function = left_function
             node.left = self.build_recursive(left_features, left_klasses, feature_names)
 
-            right_features, right_klasses, right_function = self.split_features(features, best_feature, klasses, 'right')
+            right_features, right_klasses, right_function = self.split_features(features, best_feature, klasses, 'right', subset)
             if len(right_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
@@ -193,10 +183,9 @@ class DecisionTree():
 
         while not node.is_leaf:
             value = instance[self.feature_names.index(node.feature)]
-            print(value)
-            if node.left_function(value):
+            if node.left and node.left_function(value):
                 node = node.left
-            elif node.right_function(value):
+            elif node.right and node.right_function(value):
                 node = node.right
 
         return node.feature
