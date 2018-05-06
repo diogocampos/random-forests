@@ -55,6 +55,25 @@ class DecisionTree():
 
         return best_feature
 
+    def split_features(self, features, best_feature, klasses, split_func):
+        split_features = []
+        split_klasses = []
+        first_feature = True
+        #get rows that match the best feature split
+        for feature in features:
+            values = []
+            for i, value in enumerate(feature.values):
+                if split_func(best_feature.values[i], np.mean(best_feature.values)):
+                    values.append(value)
+                    if first_feature:
+                        split_klasses.append(klasses[i])
+
+            first_feature = False
+            split_feature = Feature(feature.name, values)
+            split_features.append(split_feature)
+
+        return split_features, split_klasses
+
     def build_recursive(self, features, klasses, feature_names):
         node = Node()
         if len(set(klasses)) ==  1:
@@ -72,53 +91,24 @@ class DecisionTree():
             #remove best feature from list
             feature_names = [feature for feature in feature_names if feature != best_feature.name]
 
-            #left node
-            split_features = []
-            split_klasses = []
-            first_feature = True
-            #get rows that match the best feature split
-            for feature in features:
-                values = []
-                for i, value in enumerate(feature.values):
-                    if best_feature.values[i] <= np.mean(best_feature.values):
-                        values.append(value)
-                        if first_feature:
-                            split_klasses.append(klasses[i])
-
-                first_feature = False
-                split_feature = Feature(feature.name, values)
-                split_features.append(split_feature)
-            if len(split_klasses) == 0:
+            left_features, left_klasses = self.split_features(features, best_feature, klasses, lambda a,b: a <=b)
+            if len(left_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
                 return node
 
             node.left_function = lambda a: a <=np.mean(best_feature.values)
-            node.left = self.build_recursive(split_features, split_klasses, feature_names)
+            node.left = self.build_recursive(left_features, left_klasses, feature_names)
 
-            #right node @TODO DRY
-            split_features2 = []
-            split_klasses2 = []
-            first_feature2 = True
-            for feature in features:
-                values = []
-                for i, value in enumerate(feature.values):
-                    if best_feature.values[i] > np.mean(best_feature.values):
-                        values.append(value)
-                        if first_feature2:
-                            split_klasses2.append(klasses[i])
-
-                first_feature2 = False
-                split_feature = Feature(feature.name, values)
-                split_features2.append(split_feature)
-
-            if len(split_klasses2) == 0:
+            right_features, right_klasses = self.split_features(features, best_feature, klasses, lambda a,b: a >= b)
+            if len(right_klasses) == 0:
                 node.feature = self.most_common(klasses)
                 node.is_leaf = True
                 return node
 
             node.right_function = lambda a: a > np.mean(best_feature.values)
-            node.right = self.build_recursive(split_features2, split_klasses2, feature_names)
+            node.right = self.build_recursive(right_features, right_klasses, feature_names)
+
             return node
 
 
