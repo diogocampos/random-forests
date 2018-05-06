@@ -17,6 +17,7 @@ import numpy as np
 INPUT_FILE = 'datasets/pima.tsv'
 
 class DecisionTree():
+    root = None
     instances = []
     feature_names = []
 
@@ -33,9 +34,9 @@ class DecisionTree():
             feature = Feature(self.feature_names[index], col)
             features.append(feature)
 
-        tree_root = self.build_recursive(features, klasses)
-        print(tree_root.feature)
-        print(tree_root.left_function(20))
+        self.root = self.build_recursive(features, klasses)
+
+        return self.root
 
 
     def get_best_feature(self, features, klasses):
@@ -52,12 +53,12 @@ class DecisionTree():
     def build_recursive(self, features, klasses):
         node = Node()
         if len(set(klasses)) ==  1:
-            node.isLeaf = True
+            node.is_leaf = True
             node.feature = klasses[0]
             return node
         if len(features) == 0:
             #@TODO get most common class
-            node.isLeaf = True
+            node.is_leaf = True
             node.feature = 1
             return node
         else:
@@ -135,6 +136,19 @@ class DecisionTree():
         gain = info_d - info_feature
         return gain
 
+    def predict(self, instance):
+        node = self.root
+
+        while not node.is_leaf:
+            value = instance[self.feature_names.index(node.feature)]
+            if node.left_function(value):
+                node = node.left
+            elif node.right_function(value):
+                node = node.right
+
+        return node.feature
+
+
 class Feature():
     name = ""
     values = []
@@ -161,7 +175,16 @@ def main():
     data = np.array(data)
     tree  = DecisionTree(data, feature_names)
     tree.build()
+    right = 0
+    wrong = 0
+    for pred in data:
+        p = pred[:-1]
+        if tree.predict(p) == pred[-1]:
+            right += 1
+        else:
+            wrong += 1
 
+    print(right/(right+wrong))
 
 def load_csv(filename, separator= ','):
     data = []
