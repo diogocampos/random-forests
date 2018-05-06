@@ -13,6 +13,8 @@
 import math
 import random
 import numpy as np
+from collections import Counter
+
 
 INPUT_FILE = 'datasets/pima.tsv'
 
@@ -34,10 +36,13 @@ class DecisionTree():
             feature = Feature(self.feature_names[index], col)
             features.append(feature)
 
-        self.root = self.build_recursive(features, klasses)
+        self.root = self.build_recursive(features, klasses, self.feature_names)
 
         return self.root
 
+
+    def most_common(self, klasses):
+        return max(set(klasses), key=klasses.count)
 
     def get_best_feature(self, features, klasses):
         max_gain = 0
@@ -50,27 +55,28 @@ class DecisionTree():
 
         return best_feature
 
-    def build_recursive(self, features, klasses):
+    def build_recursive(self, features, klasses, feature_names):
         node = Node()
         if len(set(klasses)) ==  1:
             node.is_leaf = True
             node.feature = klasses[0]
             return node
-        if len(features) == 0:
-            #@TODO get most common class
+        if len(feature_names) == 0:
             node.is_leaf = True
-            node.feature = 1
+            node.feature = self.most_common(klasses)
             return node
         else:
-            best_feature = self.get_best_feature(features, klasses)
+            considered_features = [feature for feature in features if feature.name in feature_names]
+            best_feature = self.get_best_feature(considered_features, klasses)
             node.feature = best_feature.name
             #remove best feature from list
-            features = [feature for feature in features if feature.name != best_feature.name]
+            feature_names = [feature for feature in feature_names if feature != best_feature.name]
 
             #left node
             split_features = []
             split_klasses = []
             first_feature = True
+            #get rows that match the best feature split
             for feature in features:
                 values = []
                 for i, value in enumerate(feature.values):
@@ -82,8 +88,13 @@ class DecisionTree():
                 first_feature = False
                 split_feature = Feature(feature.name, values)
                 split_features.append(split_feature)
+            if len(split_klasses) == 0:
+                node.feature = self.most_common(klasses)
+                node.is_leaf = True
+                return node
+
             node.left_function = lambda a: a <=np.mean(best_feature.values)
-            node.left = self.build_recursive(split_features, split_klasses)
+            node.left = self.build_recursive(split_features, split_klasses, feature_names)
 
             #right node @TODO DRY
             split_features2 = []
@@ -101,8 +112,13 @@ class DecisionTree():
                 split_feature = Feature(feature.name, values)
                 split_features2.append(split_feature)
 
+            if len(split_klasses2) == 0:
+                node.feature = self.most_common(klasses)
+                node.is_leaf = True
+                return node
+
             node.right_function = lambda a: a > np.mean(best_feature.values)
-            node.right = self.build_recursive(split_features2, split_klasses2)
+            node.right = self.build_recursive(split_features2, split_klasses2, feature_names)
             return node
 
 
@@ -190,7 +206,7 @@ def load_csv(filename, separator= ','):
     data = []
 
     with open(filename) as file:
-        feature_names = file.readline().split(separator)  # skip first line
+        feature_names = file.readline().split(separator)[:-1]  # skip first line
         while True:
             line = file.readline()
             if not line: break
