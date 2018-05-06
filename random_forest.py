@@ -33,7 +33,9 @@ class DecisionTree():
             feature = Feature(self.feature_names[index], col)
             features.append(feature)
 
-        self.build_recursive(features, klasses)
+        tree_root = self.build_recursive(features, klasses)
+        print(tree_root.feature)
+        print(tree_root.left_function(20))
 
 
     def get_best_feature(self, features, klasses):
@@ -55,6 +57,7 @@ class DecisionTree():
             return node
         if len(features) == 0:
             #@TODO get most common class
+            node.isLeaf = True
             node.feature = 1
             return node
         else:
@@ -78,6 +81,7 @@ class DecisionTree():
                 first_feature = False
                 split_feature = Feature(feature.name, values)
                 split_features.append(split_feature)
+            node.left_function = lambda a: a <=np.mean(best_feature.values)
             node.left = self.build_recursive(split_features, split_klasses)
 
             #right node @TODO DRY
@@ -96,6 +100,7 @@ class DecisionTree():
                 split_feature = Feature(feature.name, values)
                 split_features2.append(split_feature)
 
+            node.right_function = lambda a: a > np.mean(best_feature.values)
             node.right = self.build_recursive(split_features2, split_klasses2)
             return node
 
@@ -142,6 +147,8 @@ class Node():
     is_leaf = False
     left = None
     right = None
+    left_function = None
+    right_function = None
     feature = ""
 
     def __init__(self, feature = "", left = None, right = None):
