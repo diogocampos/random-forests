@@ -20,11 +20,13 @@ class Dataset:
         self._type = type
         self._parent = parent
 
+        self._entropy = None  # cache do resultado do calculo da entropia
+
     def features(self):
         # Retorna uma lista de indices das colunas de features do dataset
 
         num_features = self._instances.shape[1]
-        return range(num_features)
+        return list(range(num_features))
 
     def same_class_for_all_instances(self):
         # Se todas as instancias tem a mesma classe, retorna a classe.
@@ -47,6 +49,7 @@ class Dataset:
         # TODO: Adicionar suporte a features numericos.
 
         if self._parent is None:
+            # TODO: "cachear" os resultados?
             return np.unique(self._instances[:, feature])
         else:
             return self._parent.values_of(feature)
@@ -76,6 +79,35 @@ class Dataset:
 
         return instance[feature]
 
+    def info_gain(self, feature):
+        # feature: indice de uma coluna do dataset
+        # Retorna o Ganho de Informacao do feature neste dataset.
+
+        return self.entropy() - self.feature_entropy(feature)
+
+    def entropy(self):
+        # Retorna Info(D), a entropia deste dataset.
+
+        if self._entropy is None:
+            classes, counts = np.unique(self._classes, return_counts=True)
+            probabilities = counts / len(self._classes)
+            self._entropy = -np.sum(probabilities * np.log2(probabilities))
+
+        return self._entropy
+
+    def feature_entropy(self, feature):
+        # feature: indice de uma coluna do dataset
+        # Retorna InfoA(D), a entropia do feature neste dataset.
+
+        values = self.values_of(feature)
+        subsets = (self.subset(feature, val) for val in values)
+        return sum((s.size() / self.size()) * s.entropy() for s in subsets)
+
+    def size(self):
+        # Retorna o numero de instancias deste dataset.
+
+        return len(self._instances)
+
 
 def load_benchmark_dataset():
     return load('dadosBenchmark_validacaoAlgoritmoAD.csv', separator=';')
@@ -103,7 +135,7 @@ def load(filename, separator=',', has_header=True, type=CATEGORIAL):
             file.readline()  # pula a primeira linha
 
         while True:
-            line = file.readline()
+            line = file.readline().strip()
             if not line: break
 
             values = line.split(separator)

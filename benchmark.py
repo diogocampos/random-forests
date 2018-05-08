@@ -3,7 +3,7 @@
 # Universidade Federal do Rio Grande do Sul
 # INF01017 - Aprendizado de Máquina - 2018/1
 
-# Trabalho: Random-forests
+# Trabalho: Random Forests
 
 # Adriano Carniel Benin
 # Diogo Campos da Silva

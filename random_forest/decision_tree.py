@@ -22,8 +22,8 @@ class DecisionNode:
         print(indent + line % (self._gain, self._feature))
 
         for value, child in self._children.items():
-            print(indent + 'value = %r' % value)
-            child._print(level=level+1)
+            print(indent + 'value = %r:' % value)
+            child.print_(level=level+1)
 
 
 class LeafNode:
@@ -98,6 +98,7 @@ def random_sample(items, sample_size):
 def select_feature(dataset, features):
     # dataset: objeto da classe Dataset
     # features: lista de indices de colunas do dataset
-    # Retorna (indice, ganho) do "melhor" feature do subconjunto dado.
+    # Retorna (ganho, indice) do "melhor" feature do subconjunto dado.
 
-    pass  # TODO
+    max_gain, feature = max((dataset.info_gain(f), f) for f in features)
+    return max_gain, feature
