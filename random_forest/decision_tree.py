@@ -1,6 +1,18 @@
 import random
 
 
+class DecisionTree:
+    def __init__(self, dataset, root_node):
+        self._dataset = dataset
+        self._root = root_node
+
+    def classify(self, instance):
+        return self._root.classify(instance, self._dataset)
+
+    def print_(self):
+        return self._root.print_()
+
+
 class DecisionNode:
     def __init__(self, gain, feature, children):
         # gain: valor do Ganho de Informação associado a esta divisao
@@ -10,10 +22,10 @@ class DecisionNode:
         self._feature = feature
         self._children = children
 
-    def predict(self, instance, dataset):
+    def classify(self, instance, dataset):
         value = dataset.value_for(instance, self._feature)
         child = self._children[value]
-        return child.predict(instance)
+        return child.classify(instance)
 
     def print_(self, level=0):
         indent = ''.join(level * ['    '])
@@ -30,7 +42,7 @@ class LeafNode:
     def __init__(self, _class):
         self._class = _class
 
-    def predict(self, instance, dataset):
+    def classify(self, instance, dataset):
         return self._class
 
     def print_(self, level=0):
@@ -53,10 +65,11 @@ def build_tree(training_data, randomize=True):
     else:
         m = num_features
 
-    return decision_tree(training_data, features, m)
+    root = build_recursive(training_data, features, m)
+    return DecisionTree(training_data, root)
 
 
-def decision_tree(training_data, features, m):
+def build_recursive(training_data, features, m):
     # training_data: objeto da classe Dataset
     # features: lista de indices das colunas do dataset
     # m: numero de features a serem considerados a cada divisao
@@ -79,7 +92,7 @@ def decision_tree(training_data, features, m):
         if subset.is_empty():
             children[value] = LeafNode(training_data.most_frequent_class())
         else:
-            children[value] = decision_tree(subset, remaining_features, m)
+            children[value] = build_recursive(subset, remaining_features, m)
 
     return DecisionNode(gain, feature, children)
 
