@@ -28,28 +28,23 @@ class Dataset:
             self._thresholds = np.mean(self._instances, axis=0)
 
 
+    def size(self):
+        # Retorna o numero de instancias deste dataset.
+
+        return len(self._instances)
+
+
+    def is_empty(self):
+        # Retorna True se este dataset estiver vazio.
+
+        return len(self._instances) == 0
+
+
     def features(self):
         # Retorna uma lista de indices das colunas de features do dataset
 
         num_features = self._instances.shape[1]
         return list(range(num_features))
-
-
-    def same_class_for_all_instances(self):
-        # Se todas as instancias tem a mesma classe, retorna a classe.
-        # Caso contrario, retorna None.
-
-        _class = self._classes[0]
-        same = np.all(self._classes == _class)
-        return _class if same else None
-
-
-    def most_frequent_class(self):
-        # Retorna a classe mais frequente neste dataset.
-
-        classes, counts = np.unique(self._classes, return_counts=True)
-        most_frequent = classes[np.argmax(counts)]
-        return most_frequent
 
 
     def values_of(self, feature):
@@ -68,22 +63,6 @@ class Dataset:
             return [False, True]
 
 
-    def subset(self, feature, value):
-        # feature: indice de uma coluna do dataset
-        # value: valor do feature
-        # Retorna o sub-Dataset das instancias cujo valor de feature == value.
-
-        values = self._instances[:, feature]  # extrai a coluna do dataset
-        if self._type is NUMERIC:
-            values = values > self._thresholds[feature]
-
-        indexes = np.where(values == value)
-        instances = self._instances[indexes]
-        classes = self._classes[indexes]
-
-        return Dataset(instances, classes, self._type, parent=self)
-
-
     def value_for(self, instance, feature):
         # instance: lista com os valores de cada feature
         # feature: indice de uma coluna do dataset
@@ -93,6 +72,23 @@ class Dataset:
             return instance[feature]
         else:
             return instance[feature] > self._thresholds[feature]
+
+
+    def same_class_for_all_instances(self):
+        # Se todas as instancias tem a mesma classe, retorna a classe.
+        # Caso contrario, retorna None.
+
+        _class = self._classes[0]
+        same = np.all(self._classes == _class)
+        return _class if same else None
+
+
+    def most_frequent_class(self):
+        # Retorna a classe mais frequente neste dataset.
+
+        classes, counts = np.unique(self._classes, return_counts=True)
+        most_frequent = classes[np.argmax(counts)]
+        return most_frequent
 
 
     def info_gain(self, feature):
@@ -122,16 +118,21 @@ class Dataset:
         return sum((s.size() / self.size()) * s.entropy() for s in subsets)
 
 
-    def size(self):
-        # Retorna o numero de instancias deste dataset.
+    def subset(self, feature, value):
+        # feature: indice de uma coluna do dataset
+        # value: valor do feature
+        # Retorna o sub-Dataset das instancias cujo valor de feature == value.
 
-        return len(self._instances)
+        values = self._instances[:, feature]  # extrai a coluna do dataset
+        if self._type is NUMERIC:
+            values = values > self._thresholds[feature]
 
+        indexes = np.where(values == value)
+        instances = self._instances[indexes]
+        classes = self._classes[indexes]
 
-    def is_empty(self):
-        # Retorna True se este dataset estiver vazio.
+        return Dataset(instances, classes, self._type, parent=self)
 
-        return len(self._instances) == 0
 
 
 def load_benchmark_dataset():
