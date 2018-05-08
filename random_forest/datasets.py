@@ -32,7 +32,11 @@ def load(filename, separator=',', has_header=True, type=NUMERIC):
 
 
 def normalize(instances):
-    pass  # TODO
+    # instances: np.array 2D de features
+
+    minimums = np.min(instances, axis=0)
+    maximums = np.max(instances, axis=0)
+    return (features - minimums) / (maximums - minimums)
 
 
 def benchmark():
