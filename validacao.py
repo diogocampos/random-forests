@@ -12,11 +12,6 @@
 
 from random_forest import datasets, decision_tree
 
-
-def main():
-    dataset = datasets.load_benchmark_dataset()
-    tree = decision_tree.build_tree(dataset, randomize=False)
-    tree.print_()
-
-
-main()
+dataset = datasets.load_benchmark_dataset()
+tree = decision_tree.build_tree(dataset, randomize=False)
+tree.print_()

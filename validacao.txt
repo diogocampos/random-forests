@@ -1,0 +1,15 @@
+DecisionNode (gain = 0.246750, feature = 0):
+    value = 'Chuvoso':
+        DecisionNode (gain = 0.970951, feature = 3):
+            value = 'Falso':
+                LeafNode (_class = 'Sim')
+            value = 'Verdadeiro':
+                LeafNode (_class = 'Nao')
+    value = 'Ensolarado':
+        DecisionNode (gain = 0.970951, feature = 2):
+            value = 'Alta':
+                LeafNode (_class = 'Nao')
+            value = 'Normal':
+                LeafNode (_class = 'Sim')
+    value = 'Nublado':
+        LeafNode (_class = 'Sim')
