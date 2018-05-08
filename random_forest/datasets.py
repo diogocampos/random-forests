@@ -4,6 +4,7 @@ import numpy as np
 CATEGORIAL = 1
 NUMERIC = 2
 
+
 class Dataset:
     def __init__(self, instances, classes, type, parent=None):
         # instances: lista de listas de valores de features
@@ -22,11 +23,17 @@ class Dataset:
 
         self._entropy = None  # cache do resultado do calculo da entropia
 
+        if type is NUMERIC:
+            # pontos de corte de cada feature
+            self._thresholds = np.mean(self._instances, axis=0)
+
+
     def features(self):
         # Retorna uma lista de indices das colunas de features do dataset
 
         num_features = self._instances.shape[1]
         return list(range(num_features))
+
 
     def same_class_for_all_instances(self):
         # Se todas as instancias tem a mesma classe, retorna a classe.
@@ -36,6 +43,7 @@ class Dataset:
         same = np.all(self._classes == _class)
         return _class if same else None
 
+
     def most_frequent_class(self):
         # Retorna a classe mais frequente neste dataset.
 
@@ -43,47 +51,56 @@ class Dataset:
         most_frequent = classes[np.argmax(counts)]
         return most_frequent
 
+
     def values_of(self, feature):
         # feature: indice de uma coluna do dataset
         # Retorna uma lista com todos os possiveis valores do feature dado.
-        # TODO: Adicionar suporte a features numericos.
 
-        if self._parent is None:
-            # TODO: "cachear" os resultados?
+        if self._parent is not None:
+            return self._parent.values_of(feature)
+
+        if self._type is CATEGORIAL:
             return np.unique(self._instances[:, feature])
         else:
-            return self._parent.values_of(feature)
+            # Para features numericos, os possiveis valores sao:
+            #    False: o valor eh menor ou igual ao ponto de corte
+            #    True: o valor eh maior que o ponto de corte
+            return [False, True]
+
 
     def subset(self, feature, value):
         # feature: indice de uma coluna do dataset
         # value: valor do feature
         # Retorna o sub-Dataset das instancias cujo valor de feature == value.
-        # TODO: Adicionar suporte a features numericos.
 
-        indexes = np.where(self._instances[:, feature] == value)
+        values = self._instances[:, feature]  # extrai a coluna do dataset
+        if self._type is NUMERIC:
+            values = values > self._thresholds[feature]
+
+        indexes = np.where(values == value)
         instances = self._instances[indexes]
         classes = self._classes[indexes]
 
         return Dataset(instances, classes, self._type, parent=self)
 
-    def is_empty(self):
-        # Retorna True se este dataset estiver vazio.
-
-        return len(self._instances) == 0
 
     def value_for(self, instance, feature):
         # instance: lista com os valores de cada feature
         # feature: indice de uma coluna do dataset
         # Retorna um valor *discretizado* para o feature da instancia dada.
-        # TODO: Adicionar suporte a features numericos.
 
-        return instance[feature]
+        if self._type is CATEGORIAL:
+            return instance[feature]
+        else:
+            return instance[feature] > self._thresholds[feature]
+
 
     def info_gain(self, feature):
         # feature: indice de uma coluna do dataset
         # Retorna o Ganho de Informacao do feature neste dataset.
 
         return self.entropy() - self.feature_entropy(feature)
+
 
     def entropy(self):
         # Retorna Info(D), a entropia deste dataset.
@@ -95,6 +112,7 @@ class Dataset:
 
         return self._entropy
 
+
     def feature_entropy(self, feature):
         # feature: indice de uma coluna do dataset
         # Retorna InfoA(D), a entropia do feature neste dataset.
@@ -103,26 +121,33 @@ class Dataset:
         subsets = (self.subset(feature, val) for val in values)
         return sum((s.size() / self.size()) * s.entropy() for s in subsets)
 
+
     def size(self):
         # Retorna o numero de instancias deste dataset.
 
         return len(self._instances)
 
 
+    def is_empty(self):
+        # Retorna True se este dataset estiver vazio.
+
+        return len(self._instances) == 0
+
+
 def load_benchmark_dataset():
     return load('dadosBenchmark_validacaoAlgoritmoAD.csv', separator=';')
-
-def load_ionosphere_dataset():
-    return load('ionosphere.data', has_header=False, type=NUMERIC)
 
 def load_pima_dataset():
     return load('pima.tsv', separator='\t', type=NUMERIC)
 
-def load_wdbc_dataset():
-    return load('wdbc.data', has_header=False, type=NUMERIC)
-
 def load_wine_dataset():
     return load('wine.data', has_header=False, type=NUMERIC)
+
+def load_ionosphere_dataset():
+    return load('ionosphere.data', has_header=False, type=NUMERIC)
+
+def load_wdbc_dataset():
+    return load('wdbc.data', has_header=False, type=NUMERIC)
 
 
 def load(filename, separator=',', has_header=True, type=CATEGORIAL):
@@ -132,7 +157,7 @@ def load(filename, separator=',', has_header=True, type=CATEGORIAL):
 
     with open('datasets/' + filename) as file:
         if has_header:
-            file.readline()  # pula a primeira linha
+            file.readline()  # descarta a primeira linha
 
         while True:
             line = file.readline().strip()
