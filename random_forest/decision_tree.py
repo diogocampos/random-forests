@@ -22,8 +22,8 @@ class DecisionNode:
         print(indent + line % (self._gain, self._feature))
 
         for value, child in self._children.items():
-            print(indent + 'value = %r:' % value)
-            child.print_(level=level+1)
+            print(indent + '    value = %r:' % value)
+            child.print_(level=level+2)
 
 
 class LeafNode:
