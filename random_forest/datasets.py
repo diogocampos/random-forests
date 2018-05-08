@@ -7,6 +7,34 @@ class Dataset:
         self._classes = np.array(classes)
         self._type = type
 
+    def same_class_for_all_instances(self):
+        # Se todas as instancias tem a mesma classe, retorna a classe.
+        # Caso contrario, retorna None.
+        pass  # TODO
+
+    def most_frequent_class(self):
+        # Retorna a classe mais frequente neste dataset.
+        pass  # TODO
+
+    def values_of(self, feature):
+        # Retorna uma lista com os possiveis valores do feature dado.
+        pass  # TODO
+
+    def subset(self, feature, value):
+        # Retorna o sub-Dataset das instancias cujo valor de feature == value.
+        pass  # TODO
+
+    def is_empty(self):
+        # Retorna True se este dataset estiver vazio.
+        pass  # TODO
+
+    def value_for(self, instance, feature):
+        # Retorna um valor discretizado para o feature da instancia dada.
+        if self._type is NUMERIC:
+            pass  # TODO
+        else:
+            return instance[feature]
+
 
 CATEGORIAL = 1
 NUMERIC = 2
