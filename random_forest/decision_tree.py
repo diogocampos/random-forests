@@ -65,8 +65,8 @@ def build_tree(training_data, randomize=True):
     else:
         m = num_features
 
-    root = build_recursive(training_data, features, m)
-    return DecisionTree(training_data, root)
+    root_node = build_recursive(training_data, features, m)
+    return DecisionTree(training_data, root_node)
 
 
 def build_recursive(training_data, features, m):
@@ -81,7 +81,7 @@ def build_recursive(training_data, features, m):
     if len(features) == 0:
         return LeafNode(training_data.most_frequent_class())
 
-    gain, feature = select_feature(training_data, random_sample(features, m))
+    gain, feature = select_feature(training_data, random_sample(m, features))
 
     remaining_features = features.copy()
     remaining_features.remove(feature)
@@ -97,15 +97,15 @@ def build_recursive(training_data, features, m):
     return DecisionNode(gain, feature, children)
 
 
-def random_sample(items, sample_size):
-    # items: uma lista de itens quaisquer
+def random_sample(sample_size, items):
     # sample_size: tamanho da amostra desejada
-    # Retorna uma lista com itens selecionados aleatoriamente.
+    # items: uma lista de itens quaisquer
+    # Retorna uma lista de itens selecionados aleatoriamente.
 
-    if len(items) <= sample_size:
-        return items
+    if sample_size < len(items):
+        return random.sample(items, sample_size)
     else:
-        return random.sample(features, sample_size)
+        return items
 
 
 def select_feature(dataset, features):

@@ -134,6 +134,16 @@ class Dataset:
         return Dataset(instances, classes, self._type, parent=self)
 
 
+    def random_bootstrap(self):
+        # Retorna um Dataset com uma amostra aleatoria das instancias
+
+        size = len(self._instances)
+        indexes = np.random.choice(size, size, replace=True)
+        instances = self._instances[indexes]
+        classes = self._classes[indexes]
+
+        return Dataset(instances, classes, self._type, parent=self)
+
 
 def load_benchmark_dataset():
     return load('dadosBenchmark_validacaoAlgoritmoAD.csv', separator=';')
