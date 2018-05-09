@@ -1,6 +1,6 @@
 import numpy as np
 
-from random_forest import decision_tree
+from . import decision_tree
 
 
 class Forest:
