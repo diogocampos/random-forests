@@ -23,8 +23,8 @@ class Dataset:
 
         self._entropy = None  # cache do resultado do calculo da entropia
 
-        if type is NUMERIC and len(instances) > 0:
-            # pontos de corte de cada feature
+        if type is NUMERIC and parent is None and len(instances) > 0:
+            # calcula os pontos de corte de cada feature
             self._thresholds = np.mean(self._instances, axis=0)
 
 
@@ -45,6 +45,15 @@ class Dataset:
 
         num_features = self._instances.shape[1]
         return list(range(num_features))
+
+
+    def thresholds(self):
+        # Retorna a lista dos pontos de corte de cada feature.
+
+        if self._parent is not None:
+            return self._parent.thresholds()
+        else:
+            return self._thresholds
 
 
     def values_of(self, feature):
@@ -71,7 +80,7 @@ class Dataset:
         if self._type is CATEGORIAL:
             return instance[feature]
         else:
-            return instance[feature] > self._thresholds[feature]
+            return instance[feature] > self.thresholds()[feature]
 
 
     def same_class_for_all_instances(self):
@@ -125,7 +134,7 @@ class Dataset:
 
         values = self._instances[:, feature]  # extrai a coluna do dataset
         if self._type is NUMERIC:
-            values = values > self._thresholds[feature]
+            values = values > self.thresholds()[feature]
 
         indexes = np.where(values == value)
         instances = self._instances[indexes]
