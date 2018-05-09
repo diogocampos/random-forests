@@ -23,7 +23,7 @@ class Dataset:
 
         self._entropy = None  # cache do resultado do calculo da entropia
 
-        if type is NUMERIC:
+        if type is NUMERIC and len(instances) > 0:
             # pontos de corte de cada feature
             self._thresholds = np.mean(self._instances, axis=0)
 
@@ -143,6 +143,61 @@ class Dataset:
         classes = self._classes[indexes]
 
         return Dataset(instances, classes, self._type, parent=self)
+
+
+    def random_folds(self, num_folds):
+        # num_folds: numero de folds a serem gerados
+        # Divide o dataset em subconjuntos aleatorios *estratificados* e
+        #    gera uma sequencia de pares com (training_data, test_data).
+
+        # agrupa exemplos por classe
+        groups = []
+        for _class in np.unique(self._classes):
+            indexes = np.where(self._classes == _class)[0]
+
+            # divide cada grupo em partes aleatorias de mesmo tamanho
+            np.random.shuffle(indexes)
+            sections = np.array_split(indexes, num_folds)
+            groups.append(sections)
+
+        # forma subconjuntos combinando uma parte de cada grupo
+        subsets = [np.hstack(cross_section) for cross_section in zip(*groups)]
+
+        # para cada subconjunto, gera o par: (outros_subsets, subset_atual)
+        folds = []
+        for i, current_subset in enumerate(subsets):
+            training_set = np.hstack(subsets[:i] + subsets[i+1:])
+            test_set = current_subset
+
+            training_data = Dataset(self._instances[training_set],
+                self._classes[training_set], self._type, parent=self)
+
+            test_data = Dataset(self._instances[test_set],
+                self._classes[test_set], self._type, parent=self)
+
+            yield training_data, test_data
+
+
+    def evaluate_classifier(self, classifier):
+        # classifier: objeto com metodo `classify(instance)`
+        # Retorna o F1-score do classificador.
+
+        classes = self._classes
+        predictions = np.array([classifier.classify(i) for i in self._instances])
+
+        class_values = np.unique(classes)
+        neg = min(class_values)
+        pos = max(class_values)
+        # TODO: implementar avaliacao para mais de 2 classes?
+
+        tp = np.count_nonzero(np.logical_and(classes == neg, predictions == neg))
+        fn = np.count_nonzero(np.logical_and(classes == pos, predictions == neg))
+        fp = np.count_nonzero(np.logical_and(classes == neg, predictions == pos))
+
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        f1_score = 2 * precision * recall / (precision + recall)
+        return f1_score
 
 
 def load_benchmark_dataset():

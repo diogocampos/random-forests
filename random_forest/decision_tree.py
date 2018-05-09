@@ -1,3 +1,4 @@
+import math
 import random
 
 
@@ -25,7 +26,7 @@ class DecisionNode:
     def classify(self, instance, dataset):
         value = dataset.value_for(instance, self._feature)
         child = self._children[value]
-        return child.classify(instance)
+        return child.classify(instance, dataset)
 
     def print_(self, level=0):
         indent = ''.join(level * ['    '])
