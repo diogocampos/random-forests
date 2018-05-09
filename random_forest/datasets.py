@@ -205,20 +205,23 @@ class Dataset:
         return f1_score
 
 
-def load_benchmark_dataset():
-    return load('dadosBenchmark_validacaoAlgoritmoAD.csv', separator=';')
+def load_dataset(name):
+    if name == 'benchmark':
+        return load('dadosBenchmark_validacaoAlgoritmoAD.csv', separator=';')
 
-def load_pima_dataset():
-    return load('pima.tsv', separator='\t', type=NUMERIC)
+    if name == 'pima':
+        return load('pima.tsv', separator='\t', type=NUMERIC)
 
-def load_wine_dataset():
-    return load('wine.data', has_header=False, type=NUMERIC)
+    if name == 'wine':
+        return load('wine.data', has_header=False, type=NUMERIC)
 
-def load_ionosphere_dataset():
-    return load('ionosphere.data', has_header=False, type=NUMERIC)
+    if name == 'ionosphere':
+        return load('ionosphere.data', has_header=False, type=NUMERIC)
 
-def load_wdbc_dataset():
-    return load('wdbc.data', has_header=False, type=NUMERIC)
+    if name == 'wdbc':
+        return load('wdbc.data', has_header=False, type=NUMERIC)
+
+    raise IndexError('Dataset desconhecido: %r' % name)
 
 
 def load(filename, separator=',', has_header=True, type=CATEGORIAL):

@@ -10,29 +10,43 @@
 # João Pedro Bielko Weit
 
 
+import sys
 from random_forest import datasets, forest
 
 
+USAGE = '''
+Uso:  $ %s DATASET
+DATASET pode ser 'benchmark', 'pima', 'wine', 'ionosphere', ou 'wdbc'.
+'''.strip()
+
+
 # Parametros
-DATASET = datasets.load_pima_dataset()
-NUM_FOLDS = 10
-MAX_NUM_TREES = 50
+FOLDS = 10
+MAX_TREES = 50
 
 
-def main():
+def main(argv):
     # Executa k-fold cross-validation com os parametros definidos acima.
     # Imprime os resultados em formato CSV: cada linha contem o valor de
-    # `NTREE` seguido de `K` F1-scores resultantes de cada um dos `K` folds.
+    # NTREE seguido de K F1-scores resultantes de cada um dos K folds.
 
-    for num_trees in range(5, MAX_NUM_TREES + 1, 5):
-        print(num_trees, end='', flush=True)
+    try:
+        dataset_name = argv[1]
+        dataset = datasets.load_dataset(dataset_name.lower())
+    except IndexError:
+        print(USAGE % argv[0], file=sys.stderr)
+        sys.exit(1)
 
-        scores = forest.cross_validation(DATASET, num_trees, NUM_FOLDS)
-        for f1_score in scores:
-            print(',%s' % f1_score, end='', flush=True)
+
+    for ntree in range(5, MAX_TREES + 1, 5):
+        print(ntree, end='', flush=True)
+
+        f1_scores = forest.cross_validation(dataset, ntree, FOLDS)
+        for score in f1_scores:
+            print(',%s' % score, end='', flush=True)
 
         print()
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
