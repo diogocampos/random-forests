@@ -13,15 +13,26 @@
 from random_forest import datasets, forest
 
 
+# Parametros
+DATASET = datasets.load_pima_dataset()
 NUM_FOLDS = 10
-NUM_TREES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+MAX_NUM_TREES = 50
 
-dataset = datasets.load_pima_dataset()
 
-for num_trees in NUM_TREES:
-    print(num_trees, end='', flush=True)
+def main():
+    # Executa k-fold cross-validation com os parametros definidos acima.
+    # Imprime os resultados em formato CSV: cada linha contem o valor de
+    # `NTREE` seguido de `K` F1-scores resultantes de cada um dos `K` folds.
 
-    for f1_score in forest.cross_validation(dataset, num_trees, NUM_FOLDS):
-        print(',%s' % f1_score, end='', flush=True)
+    for num_trees in range(5, MAX_NUM_TREES + 1, 5):
+        print(num_trees, end='', flush=True)
 
-    print()
+        scores = forest.cross_validation(DATASET, num_trees, NUM_FOLDS)
+        for f1_score in scores:
+            print(',%s' % f1_score, end='', flush=True)
+
+        print()
+
+
+if __name__ == '__main__':
+    main()
