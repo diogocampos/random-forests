@@ -12,11 +12,7 @@ class Dataset:
         # type: tipo do dataset, pode ser CATEGORIAL ou NUMERIC
         # parent: Dataset do qual este eh um subconjunto
 
-        if type is NUMERIC and parent is None:
-            self._instances = normalize_features(np.array(instances))
-        else:
-            self._instances = np.array(instances)
-
+        self._instances = np.array(instances)
         self._classes = np.array(classes)
         self._type = type
         self._parent = parent
@@ -243,12 +239,3 @@ def load(filename, separator=',', has_header=True, type=CATEGORIAL):
             classes.append(values[-1])
 
     return Dataset(instances, classes, type)
-
-
-def normalize_features(instances):
-    # instances: np.array 2D de features
-    # Retorna um array de instancias normalizadas no intervalo [0, 1].
-
-    minimums = np.min(instances, axis=0)
-    maximums = np.max(instances, axis=0)
-    return (instances - minimums) / (maximums - minimums)
