@@ -16,13 +16,13 @@ from random_forest import datasets, forest
 
 USAGE = '''
 Uso:  $ %s DATASET
-DATASET pode ser 'benchmark', 'pima', 'wine', 'ionosphere', ou 'wdbc'.
+DATASET pode ser 'pima', 'wine', 'ionosphere', ou 'wdbc'.
 '''.strip()
 
 
 # Parametros
 FOLDS = 10
-MAX_TREES = 50
+MAX_TREES = 60
 
 
 def main(argv):
