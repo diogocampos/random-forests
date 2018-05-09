@@ -22,7 +22,7 @@ DATASET pode ser 'pima', 'wine', 'ionosphere', ou 'wdbc'.
 
 # Parametros
 FOLDS = 10
-MAX_TREES = 60
+MAX_TREES = 100
 
 
 def main(argv):
@@ -37,16 +37,23 @@ def main(argv):
         print(USAGE % argv[0], file=sys.stderr)
         sys.exit(1)
 
+    header = ['Ntree'] + ['Fold%d' % (i+1) for i in range(FOLDS)] + ['Mean']
+    print(','.join(header))
 
     for ntree in range(5, MAX_TREES + 1, 5):
-        print(ntree, end='', flush=True)
+        print('%s,' % ntree, end='', flush=True)
 
-        f1_scores = forest.cross_validation(dataset, ntree, FOLDS)
-        for score in f1_scores:
-            print(',%s' % score, end='', flush=True)
+        f1_scores = []
+        for score in forest.cross_validation(dataset, ntree, FOLDS):
+            f1_scores.append(score)
+            print('%s,' % score, end='', flush=True)
 
-        print()
+        mean = sum(f1_scores) / len(f1_scores)
+        print(mean)
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt:
+        sys.exit(1)
