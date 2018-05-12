@@ -12,8 +12,8 @@ class Dataset:
         # type: tipo do dataset, pode ser CATEGORIAL ou NUMERIC
         # parent: Dataset do qual este eh um subconjunto
 
-        self._instances = np.array(instances)
-        self._classes = np.array(classes)
+        self._instances = instances
+        self._classes = classes
         self._type = type
         self._parent = parent
 
@@ -240,4 +240,4 @@ def load(filename, separator=',', has_header=True, type=CATEGORIAL):
             instances.append([convert(val) for val in values[:-1]])
             classes.append(values[-1])
 
-    return Dataset(instances, classes, type)
+    return Dataset(np.array(instances), np.array(classes), type)
