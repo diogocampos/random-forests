@@ -14,10 +14,10 @@ import sys
 from random_forest import datasets, forest
 
 
-USAGE = '''
+USAGE = """
 Uso:  $ %s DATASET
 DATASET pode ser 'pima', 'wine', 'ionosphere', ou 'wdbc'.
-'''.strip()
+""".strip()
 
 
 # Parametros

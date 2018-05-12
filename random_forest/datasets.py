@@ -46,10 +46,10 @@ class Dataset:
     def thresholds(self):
         # Retorna a lista dos pontos de corte de cada feature.
 
-        if self._parent is not None:
-            return self._parent.thresholds()
-        else:
+        if self._parent is None:
             return self._thresholds
+        else:
+            return self._parent.thresholds()
 
 
     def values_of(self, feature):
@@ -169,7 +169,6 @@ class Dataset:
         subsets = [np.hstack(cross_section) for cross_section in zip(*groups)]
 
         # para cada subconjunto, gera o par: (outros_subsets, subset_atual)
-        folds = []
         for i, current_subset in enumerate(subsets):
             training_set = np.hstack(subsets[:i] + subsets[i+1:])
             test_set = current_subset
